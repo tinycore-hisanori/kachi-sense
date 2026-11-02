@@ -9,10 +9,10 @@
 | 3 | ショットキーバリアダイオード BAT43（DO-35） | [113907](https://akizukidenshi.com/catalog/g/g113907/) | 4 | 10本入 | ¥150 | ADC ピンの保護。1チャンネルに2本（3V3 側と GND 側） |
 | 4 | カーボン抵抗 1/4W 10kΩ | [125103](https://akizukidenshi.com/catalog/g/g125103/) | 4 | 100本入 | ¥100 | 中点電圧の分圧に2本、ADC への直列に1本ずつ |
 | 5 | カーボン抵抗 1/4W 100kΩ | [125104](https://akizukidenshi.com/catalog/g/g125104/) | 2 | 100本入 | ¥200 | 圧電素子のバイアス |
-| 6 | 積層セラミックコンデンサー 1500pF 50V X7R 5mm | [108133](https://akizukidenshi.com/catalog/g/g108133/) | 2 | ページで確認 | ページで確認 | ADC 前のローパス（約 10 kHz） |
+| 6 | 積層セラミックコンデンサー 1500pF 50V X7R 5mm | [108133](https://akizukidenshi.com/catalog/g/g108133/) | 2 | 10個入 | ¥100 | ADC 前のローパス（約 10 kHz） |
 | 7 | 積層セラミックコンデンサー 10μF 50V X7S 5mm | [108155](https://akizukidenshi.com/catalog/g/g108155/) | 1 | 1個 | ¥60 | 中点電圧の安定化 |
 
-**合計の目安**：Pico を含めて約 1,500 円（1500pF のコンデンサーを除く）
+**合計の目安**：Pico を含めて約 1,600 円
 
 ## 秋月以外で用意するもの
 

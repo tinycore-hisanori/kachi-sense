@@ -55,7 +55,7 @@
 
 ![回路図](docs/schematic.svg)
 
-部品はすべて秋月電子通商で揃います。販売コード付きの部品表は [docs/bom.md](docs/bom.md)、配線は [docs/wiring.md](docs/wiring.md) にあります。Pico を含めて約 1,500 円です。
+部品はすべて秋月電子通商で揃います。販売コード付きの部品表は [docs/bom.md](docs/bom.md)、配線は [docs/wiring.md](docs/wiring.md) にあります。Pico を含めて約 1,600 円です。
 
 各チャンネル 20 kHz でサンプリングし、Pico の上で検出まで済ませます。PC には検出したイベントだけを USB シリアルで送ります。置く皿で豆を検出すると、Pico の LED が光ります。
 
