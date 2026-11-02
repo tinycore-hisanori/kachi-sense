@@ -8,7 +8,8 @@
 //   {"ch":1,"t_us":1234567,"kind":"click","dur_ms":13.1,"peak":212.0,"energy":15320.5,"ratio":8.4}
 // GP25 (on-board LED) blinks on every click on the target plate.
 //
-// Serial commands: "t" prints thuds too (toggle), "s" prints a status line.
+// Serial commands: "t" toggles printing thuds, "T" turns it on, "Q" turns it off,
+// "s" prints a status line. The web demo (docs/demo/) sends "T" when it connects.
 
 #include <Arduino.h>
 #include "pico/time.h"
@@ -78,6 +79,8 @@ void loop() {
   if (Serial.available()) {
     const int c = Serial.read();
     if (c == 't') print_thuds_ = !print_thuds_;
+    if (c == 'T') print_thuds_ = true;
+    if (c == 'Q') print_thuds_ = false;
     if (c == 's') {
       Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu thuds=%s\n",
                     (unsigned long)n_ch_[0], (unsigned long)n_ch_[1], (unsigned long)overruns_,

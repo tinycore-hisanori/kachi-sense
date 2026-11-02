@@ -94,6 +94,14 @@ python -m kachi_sense.label events.csv trials.csv -o labels.csv
 | `double` | 置く皿で 2 回以上（2 粒運んだ、または跳ねた） |
 | `miss` | 置く皿で音がない |
 
+### ライブデモ画面（Web Serial）
+
+Pico をパソコンにつないだまま、ブラウザで判定の様子を大きく表示できます。豆が置く皿に着地すると「成功」、取り出す皿に落ちると「落下」、指の衝突は「無視」として数え、皿が光ります。デモ動画の撮影用です。
+
+- `docs/demo/index.html` を Chrome か Edge で開き、「Pico に接続」を押してポートを選ぶ（GitHub Pages を `main` の `/docs` で有効にすると https://tinycore-hisanori.github.io/kachi-sense/demo/ で開けます）
+- ボードがなくても「デモモード」で模擬データの動きを見られます
+- 「記録を保存（CSV）」で検出ログを保存できます
+
 ### ハードなしで試す
 
 ```bash
