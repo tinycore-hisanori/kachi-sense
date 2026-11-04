@@ -1,4 +1,5 @@
-// kachi-sense firmware for Raspberry Pi Pico (RP2040), Arduino-Pico core (Earle Philhower).
+// kachi-sense firmware for Raspberry Pi Pico / Pico W (RP2040) and Pico 2 / Pico 2 W (RP2350),
+// Arduino-Pico core (Earle Philhower). The same sketch builds for all four boards.
 //
 // Two piezo discs, one under each plate:
 //   GP26 / A0 = ch 0 = source plate (beans start here)
@@ -6,10 +7,11 @@
 // Each channel is sampled at 20 kHz (the timer runs at 40 kHz and alternates).
 // Detected events go out over USB serial as one JSON object per line:
 //   {"ch":1,"t_us":1234567,"kind":"click","dur_ms":13.1,"peak":212.0,"energy":15320.5,"ratio":8.4}
-// GP25 (on-board LED) blinks on every click on the target plate.
+// The on-board LED (LED_BUILTIN) blinks on every click on the target plate. On the W boards the
+// LED hangs off the wireless chip; the core routes LED_BUILTIN there for us.
 //
 // Serial commands: "t" toggles printing thuds, "T" turns it on, "Q" turns it off,
-// "s" prints a status line. The web demo (docs/demo/) sends "T" when it connects.
+// "s" prints a status line, "v" prints the version / chip line. The web demo (docs/demo/) sends "T" when it connects.
 
 #include <Arduino.h>
 #include "pico/time.h"
@@ -19,7 +21,7 @@
 static constexpr uint32_t RING = 4096;          // samples, both channels interleaved
 static volatile uint16_t ring_[RING];
 static volatile uint32_t head_ = 0;              // written by the timer
-static uint32_t tail_ = 0;                       // read by loop()
+static volatile uint32_t tail_ = 0;              // advanced by loop(), read by the timer
 static volatile uint32_t overruns_ = 0;
 static volatile uint8_t next_ch_ = 0;
 
@@ -30,6 +32,18 @@ static uint32_t t0_us_ = 0;
 static bool print_thuds_ = false;
 static uint32_t led_off_ms_ = 0;
 static uint32_t clicks_[2] = {0, 0};
+
+#define KS_VERSION "0.1.1"
+#if defined(PICO_RP2350)
+#define KS_CHIP "RP2350"
+#else
+#define KS_CHIP "RP2040"
+#endif
+
+static void print_version() {
+  Serial.printf("# kachi-sense %s on %s, %lu MHz, 2 ch x %d Hz\n", KS_VERSION, KS_CHIP,
+                (unsigned long)(rp2040.f_cpu() / 1000000), (int)ks::FS);
+}
 
 static bool on_tick(repeating_timer_t*) {
   const uint16_t v = adc_read();                 // channel selected on the previous tick
@@ -55,6 +69,9 @@ static void emit(const ks::Event& e) {
 
 void setup() {
   Serial.begin(115200);
+  // Give the PC up to 2 s to open the port so the version line is not lost; runs fine without a PC.
+  for (const uint32_t t = millis(); !Serial && millis() - t < 2000;) delay(10);
+  print_version();
   pinMode(LED_BUILTIN, OUTPUT);
   adc_init();
   adc_gpio_init(26);
@@ -81,6 +98,7 @@ void loop() {
     if (c == 't') print_thuds_ = !print_thuds_;
     if (c == 'T') print_thuds_ = true;
     if (c == 'Q') print_thuds_ = false;
+    if (c == 'v') print_version();
     if (c == 's') {
       Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu thuds=%s\n",
                     (unsigned long)n_ch_[0], (unsigned long)n_ch_[1], (unsigned long)overruns_,

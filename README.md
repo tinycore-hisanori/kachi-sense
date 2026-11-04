@@ -65,9 +65,29 @@
 
 ### 1. ファームウェアを書き込む
 
-Arduino IDE に [Arduino-Pico](https://github.com/earlephilhower/arduino-pico) を入れ、`firmware/kachi_sense_pico/` を開いて Raspberry Pi Pico に書き込みます。シリアルモニタ（115200 bps）に、豆を検出するたび 1 行の JSON が出ます。`t` で衝突（thud）の表示を切り替え、`s` で状態を表示します。
+同じスケッチが Raspberry Pi Pico / Pico W（RP2040）と Pico 2 / Pico 2 W（RP2350）のどれでも動きます。違うのはボードの選択だけです。
 
-Arduino IDE を使わずに書き込むこともできます。GitHub Actions が push のたびにファームウェアをビルドしているので、[Actions](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml) の最新の実行から、Raspberry Pi Pico なら `kachi_sense-pico-uf2`、Pico 2 W なら `kachi_sense-pico2w-uf2` をダウンロードします（GitHub へのログインが必要です。RP2040 用と RP2350 用は互換がないので、ボードに合ったほうを使ってください）。Pico の BOOTSEL ボタンを押しながら USB につなぎ、出てきたドライブ `RPI-RP2` に `.uf2` をコピーすれば書き込み完了です。
+#### Arduino IDE で書き込む（Arduino IDE 2.x）
+
+1. **ボードの追加 URL を登録**：「ファイル」→「基本設定」の「追加のボードマネージャの URL」に次を貼る。
+   `https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json`
+2. **コアを入れる**：左のボードマネージャで `pico` を検索し、**Raspberry Pi Pico/RP2040/RP2350**（作者 Earle F. Philhower, III）をインストール。公式の「Arduino Mbed OS RP2040 Boards」ではないので注意。
+3. **スケッチを開く**：このリポジトリを clone するか ZIP で落とし、`firmware/kachi_sense_pico/kachi_sense_pico.ino` を開く（`detector.h` も同じフォルダに必要。フォルダ名とスケッチ名は同じままにする）。
+4. **ボードを選ぶ**：「ツール」→「ボード」→「Raspberry Pi Pico/RP2040/RP2350」→ 使うボード（Pico 2 W なら **Raspberry Pi Pico 2W**、初代なら Raspberry Pi Pico）。ほかの設定は初期値のままでよい。
+5. **初回だけ BOOTSEL で接続**：Pico の BOOTSEL ボタンを押しながら USB につなぎ、離す。ポートは選ばなくてよい（「UF2 Board」と出ることもある）。
+6. **書き込み**：「→」（書き込み）を押す。終わると Pico が再起動して USB シリアル（Windows は COM ポート）として出てくる。2回目からは、そのポートを選んで書き込みを押すだけで BOOTSEL は不要。
+7. **動作確認**：シリアルモニタを 115200 bps で開く。起動時に `# kachi-sense 0.1.1 on RP2350, 150 MHz, 2 ch x 20000 Hz` のような行が出る（開くのが遅れたら `v` を送る）。`s` を送ると状態が出て、`samples` の数が増えていれば ADC が回っている。
+
+豆を検出するたび 1 行の JSON が出ます。`t` で衝突（thud）の表示を切り替え、`s` で状態、`v` でバージョンを表示します。
+
+うまくいかないとき：
+
+- 書き込みでポートが見つからないと言われる → USB を抜いて BOOTSEL を押しながら挿し直し、もう一度書き込む。
+- 何も表示されない → USB ケーブルが充電専用でないか確認する。ボードの選択が実物と合っていないと（RP2040 用を RP2350 に入れるなど）起動しない。
+
+#### Arduino IDE を使わずに書き込む（UF2）
+
+GitHub Actions が push のたびにファームウェアをビルドしているので、[Actions](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml) の最新の実行から、Raspberry Pi Pico なら `kachi_sense-pico-uf2`、Pico 2 W なら `kachi_sense-pico2w-uf2` をダウンロードします（GitHub へのログインが必要です。RP2040 用と RP2350 用は互換がないので、ボードに合ったほうを使ってください）。BOOTSEL ボタンを押しながら USB につなぎ、出てきたドライブ（初代は `RPI-RP2`、Pico 2 系は `RP2350`）に `.uf2` をコピーすれば書き込み完了です。
 
 ### 2. PC で記録する
 
