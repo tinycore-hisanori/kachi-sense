@@ -26,8 +26,14 @@ jobs:
         run: pytest -v -rs
 
   firmware:
-    name: Build firmware (Raspberry Pi Pico)
+    name: Build firmware (${{ matrix.board.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - { name: Raspberry Pi Pico, fqbn: "rp2040:rp2040:rpipico", tag: pico }
+          - { name: Raspberry Pi Pico 2 W, fqbn: "rp2040:rp2040:rpipico2w", tag: pico2w }
     steps:
       - uses: actions/checkout@v5
       - name: Cache Arduino data
@@ -45,7 +51,7 @@ jobs:
       - name: Compile
         run: |
           arduino-cli compile \
-            --fqbn rp2040:rp2040:rpipico \
+            --fqbn ${{ matrix.board.fqbn }} \
             --warnings all \
             --output-dir build \
             firmware/kachi_sense_pico
@@ -53,6 +59,6 @@ jobs:
       - name: Upload UF2
         uses: actions/upload-artifact@v4
         with:
-          name: kachi_sense_pico-uf2
+          name: kachi_sense-${{ matrix.board.tag }}-uf2
           path: build/*.uf2
           if-no-files-found: error

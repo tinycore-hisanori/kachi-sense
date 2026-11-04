@@ -67,7 +67,7 @@
 
 Arduino IDE に [Arduino-Pico](https://github.com/earlephilhower/arduino-pico) を入れ、`firmware/kachi_sense_pico/` を開いて Raspberry Pi Pico に書き込みます。シリアルモニタ（115200 bps）に、豆を検出するたび 1 行の JSON が出ます。`t` で衝突（thud）の表示を切り替え、`s` で状態を表示します。
 
-Arduino IDE を使わずに書き込むこともできます。GitHub Actions が push のたびにファームウェアをビルドしているので、[Actions](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml) の最新の実行から `kachi_sense_pico-uf2` をダウンロードします（GitHub へのログインが必要です）。Pico の BOOTSEL ボタンを押しながら USB につなぎ、出てきたドライブ `RPI-RP2` に `.uf2` をコピーすれば書き込み完了です。
+Arduino IDE を使わずに書き込むこともできます。GitHub Actions が push のたびにファームウェアをビルドしているので、[Actions](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml) の最新の実行から、Raspberry Pi Pico なら `kachi_sense-pico-uf2`、Pico 2 W なら `kachi_sense-pico2w-uf2` をダウンロードします（GitHub へのログインが必要です。RP2040 用と RP2350 用は互換がないので、ボードに合ったほうを使ってください）。Pico の BOOTSEL ボタンを押しながら USB につなぎ、出てきたドライブ `RPI-RP2` に `.uf2` をコピーすれば書き込み完了です。
 
 ### 2. PC で記録する
 
