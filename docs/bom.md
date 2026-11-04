@@ -7,10 +7,10 @@
 | 1 | Raspberry Pi Pico（SC0915） | [116132](https://akizukidenshi.com/catalog/g/g116132/) | 1 | 1個 | ¥800 | ブレッドボードに挿すなら、ピンヘッダ実装済みの Pico H（[118085](https://akizukidenshi.com/catalog/g/g118085/)、¥920）が楽 |
 | 2 | 圧電サウンダー 7BB-27-4L0（村田、27mm、リード線付き） | [113209](https://akizukidenshi.com/catalog/g/g113209/) | 2 | 1個 | ¥80 × 2 | 共振 4.6 kHz で、豆の着地音（2〜6 kHz）とちょうど重なる |
 | 3 | ショットキーバリアダイオード BAT43（DO-35） | [113907](https://akizukidenshi.com/catalog/g/g113907/) | 4 | 10本入 | ¥150 | ADC ピンの保護。1チャンネルに2本（3V3 側と GND 側） |
-| 4 | カーボン抵抗 1/4W 10kΩ | [125103](https://akizukidenshi.com/catalog/g/g125103/) | 4 | 100本入 | ¥100 | 中点電圧の分圧に2本、ADC への直列に1本ずつ |
+| 4 | カーボン抵抗 1/4W 10kΩ | [125103](https://akizukidenshi.com/catalog/g/g125103/) | 6 | 100本入 | ¥100 | 1チャンネルに3本（中点電圧の分圧に2本、ADC への直列に1本） |
 | 5 | カーボン抵抗 1/4W 100kΩ | [125104](https://akizukidenshi.com/catalog/g/g125104/) | 2 | 100本入 | ¥200 | 圧電素子のバイアス |
-| 6 | 積層セラミックコンデンサー 1500pF 50V X7R 5mm | [108133](https://akizukidenshi.com/catalog/g/g108133/) | 2 | 10個入 | ¥100 | ADC 前のローパス（約 10 kHz） |
-| 7 | 積層セラミックコンデンサー 10μF 50V X7S 5mm | [108155](https://akizukidenshi.com/catalog/g/g108155/) | 1 | 1個 | ¥60 | 中点電圧の安定化 |
+| 6 | 積層セラミックコンデンサー 1500pF 50V X7R 5mm | [108133](https://akizukidenshi.com/catalog/g/g108133/) | 2 | 10個入 | ¥100 | ADC 前のローパス（約 10 kHz）。1000pF でも可 |
+| 7 | 積層セラミックコンデンサー 10μF 50V X7S 5mm | [108155](https://akizukidenshi.com/catalog/g/g108155/) | 2 | 1個 | ¥60 × 2 | 中点電圧の安定化（1チャンネルに1個） |
 
 **合計の目安**：Pico を含めて約 1,600 円
 

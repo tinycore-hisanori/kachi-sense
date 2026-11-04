@@ -25,8 +25,23 @@ def gnd(d, x, y):
     d.add(elm.Ground().at((x, y)))
 
 
-def channel(d, x0, yc, gpio, plate, n):
-    """One piezo channel hanging off the VMID bus at (x0, yc)."""
+def channel(d, yc, gpio, plate, n):
+    """One complete, independent channel: its own VMID divider plus the piezo front end."""
+    ym = yc - 3.0                     # VMID node (y), below the signal line
+    # VMID divider and its capacitor
+    vdd(d, 1.2, ym + 2.6)
+    d.add(elm.Resistor().at((1.2, ym + 2.6)).to((1.2, ym)).label(f"R{n}c\n10kΩ", loc="top", ofst=0.15))
+    d.add(elm.Dot().at((1.2, ym)))
+    d.add(elm.Resistor().at((1.2, ym)).to((1.2, ym - 2.6)).label(f"R{n}d\n10kΩ", loc="top", ofst=0.15))
+    gnd(d, 1.2, ym - 2.6)
+    d.add(elm.Line().at((1.2, ym)).to((4.0, ym)))
+    d.add(elm.Dot().at((2.6, ym)))
+    d.add(elm.Capacitor().at((2.6, ym)).to((2.6, ym - 2.6)).label(f"C{n}m\n10μF", loc="bottom", ofst=0.15))
+    gnd(d, 2.6, ym - 2.6)
+    d.add(elm.Label().at((1.4, ym + 0.4)).label(f"VMID{n} ≈ 1.65V", halign="left"))
+    d.add(elm.Line().at((4.0, ym)).to((4.0, yc)))
+
+    x0 = 4.0
     xa = x0 + 3.6                     # node A: piezo + / bias / series R
     xb = xa + 3.2                     # node B: ADC node
     d.add(elm.Line().at((x0, yc)).to((x0 + 0.6, yc)))
@@ -65,35 +80,22 @@ def channel(d, x0, yc, gpio, plate, n):
     d.add(elm.Dot(open=True).at((xd + 2.5, yc)).label(gpio, loc="right", ofst=0.15))
 
 
-Y0, Y1, YM = 5.0, -1.5, 1.8           # ch0 line, ch1 line, VMID node (y)
-XB = 4.0                              # VMID bus (x)
+Y0, Y1 = 6.0, -6.0                    # ch0 / ch1 signal lines (y)
 
 with schemdraw.Drawing(show=False) as d:
-    # mid-rail divider and its capacitor (shared by both channels)
-    vdd(d, 1.2, YM + 2.6)
-    d.add(elm.Resistor().at((1.2, YM + 2.6)).to((1.2, YM)).label("R1\n10kΩ", loc="top", ofst=0.15))
-    d.add(elm.Dot().at((1.2, YM)))
-    d.add(elm.Resistor().at((1.2, YM)).to((1.2, YM - 2.6)).label("R2\n10kΩ", loc="top", ofst=0.15))
-    gnd(d, 1.2, YM - 2.6)
-    d.add(elm.Line().at((1.2, YM)).to((XB, YM)))
-    d.add(elm.Dot().at((2.6, YM)))
-    d.add(elm.Capacitor().at((2.6, YM)).to((2.6, YM - 2.6)).label("C0\n10μF", loc="bottom", ofst=0.15))
-    gnd(d, 2.6, YM - 2.6)
-    d.add(elm.Label().at((1.4, YM + 0.4)).label("VMID ≈ 1.65V", halign="left"))
-    # VMID bus up to ch0 and down to ch1
-    d.add(elm.Dot().at((XB, YM)))
-    d.add(elm.Line().at((XB, Y1)).to((XB, Y0)))
+    d.add(elm.Label().at((0, Y0 + 3.4)).label("ch0（取り出す皿）", halign="left", fontsize=13))
+    channel(d, Y0, "GP26 / ADC0  31番ピン  (ch0)", "取り出す皿", 1)
+    d.add(elm.Line().at((0, Y0 - 6.9)).to((24.5, Y0 - 6.9)).linestyle(":").color("gray"))
+    d.add(elm.Label().at((0, Y1 + 3.4)).label("ch1（置く皿）　※ch0 とまったく同じ回路", halign="left", fontsize=13))
+    channel(d, Y1, "GP27 / ADC1  32番ピン  (ch1)", "置く皿", 2)
 
-    channel(d, XB, Y0, "GP26 / ADC0  31番ピン  (ch0)", "取り出す皿", 1)
-    channel(d, XB, Y1, "GP27 / ADC1  32番ピン  (ch1)", "置く皿", 2)
-
-    yn = Y1 - 3.6
+    yn = Y1 - 7.2
     d.add(elm.Label().at((0, yn)).label(
         "3V3 = Pico 36番ピン 3V3(OUT)　／　⏚ = Pico 33番ピン AGND"
         "（Raspberry Pi Pico・Pico 2 W 共通）", halign="left"))
     d.add(elm.Label().at((0, yn - 0.6)).label(
         "PZ の − は VMID、＋ は R*a/R*b 側。D*a はカソードが 3V3、D*b はアノードが AGND。"
-        "R1・R2・C0 は2チャンネルで共用。", halign="left"))
+        "2チャンネルは完全に独立（VMID も別々）。", halign="left"))
 
     d.save(str(OUT / "schematic.svg"))
     d.save(str(OUT / "schematic.png"), dpi=160)
