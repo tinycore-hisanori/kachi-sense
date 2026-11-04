@@ -14,7 +14,8 @@ matplotlib.rcParams["font.family"] = ["Noto Sans CJK JP", "Noto Sans CJK SC", "s
 schemdraw.config(fontsize=11, lw=1.4)
 OUT = Path(__file__).resolve().parents[1] / "docs"
 
-V3_LABEL = "3V3"
+V3_LABEL = "3V3（Pico 36番ピン）"
+GND_LABEL = "Pico AGND\n（33番ピン）"
 
 
 def vdd(d, x, y):
@@ -22,7 +23,7 @@ def vdd(d, x, y):
 
 
 def gnd(d, x, y):
-    d.add(elm.Ground().at((x, y)))
+    d.add(elm.Ground().at((x, y)).label(GND_LABEL, loc="bottom", fontsize=9, ofst=0.1))
 
 
 def channel(d, yc, gpio, plate, n):
@@ -35,9 +36,9 @@ def channel(d, yc, gpio, plate, n):
     d.add(elm.Resistor().at((1.2, ym)).to((1.2, ym - 2.6)).label(f"R{n}d\n10kΩ", loc="top", ofst=0.15))
     gnd(d, 1.2, ym - 2.6)
     d.add(elm.Line().at((1.2, ym)).to((4.0, ym)))
-    d.add(elm.Dot().at((2.6, ym)))
-    d.add(elm.Capacitor().at((2.6, ym)).to((2.6, ym - 2.6)).label(f"C{n}m\n10μF", loc="bottom", ofst=0.15))
-    gnd(d, 2.6, ym - 2.6)
+    d.add(elm.Dot().at((3.0, ym)))
+    d.add(elm.Capacitor().at((3.0, ym)).to((3.0, ym - 2.6)).label(f"C{n}m\n10μF", loc="bottom", ofst=0.15))
+    gnd(d, 3.0, ym - 2.6)
     d.add(elm.Label().at((1.4, ym + 0.4)).label(f"VMID{n} ≈ 1.65V", halign="left"))
     d.add(elm.Line().at((4.0, ym)).to((4.0, yc)))
 
@@ -80,18 +81,18 @@ def channel(d, yc, gpio, plate, n):
     d.add(elm.Dot(open=True).at((xd + 2.5, yc)).label(gpio, loc="right", ofst=0.15))
 
 
-Y0, Y1 = 6.0, -6.0                    # ch0 / ch1 signal lines (y)
+Y0, Y1 = 6.0, -7.0                    # ch0 / ch1 signal lines (y)
 
 with schemdraw.Drawing(show=False) as d:
     d.add(elm.Label().at((0, Y0 + 3.4)).label("ch0（取り出す皿）", halign="left", fontsize=13))
     channel(d, Y0, "GP26 / ADC0  31番ピン  (ch0)", "取り出す皿", 1)
-    d.add(elm.Line().at((0, Y0 - 6.9)).to((24.5, Y0 - 6.9)).linestyle(":").color("gray"))
+    d.add(elm.Line().at((0, Y0 - 7.4)).to((24.5, Y0 - 7.4)).linestyle(":").color("gray"))
     d.add(elm.Label().at((0, Y1 + 3.4)).label("ch1（置く皿）　※ch0 とまったく同じ回路", halign="left", fontsize=13))
     channel(d, Y1, "GP27 / ADC1  32番ピン  (ch1)", "置く皿", 2)
 
-    yn = Y1 - 7.2
+    yn = Y1 - 8.0
     d.add(elm.Label().at((0, yn)).label(
-        "3V3 = Pico 36番ピン 3V3(OUT)　／　⏚ = Pico 33番ピン AGND"
+        "3V3 はすべて Pico の 36番ピン 3V3(OUT) から取る。GND（⏚）はすべて Pico の 33番ピン AGND につなぐ。"
         "（Raspberry Pi Pico・Pico 2 W 共通）", halign="left"))
     d.add(elm.Label().at((0, yn - 0.6)).label(
         "PZ の − は VMID、＋ は R*a/R*b 側。D*a はカソードが 3V3、D*b はアノードが AGND。"
