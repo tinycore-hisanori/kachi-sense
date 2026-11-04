@@ -11,7 +11,11 @@
 // LED hangs off the wireless chip; the core routes LED_BUILTIN there for us.
 //
 // Serial commands: "t" toggles printing thuds, "T" turns it on, "Q" turns it off,
-// "s" prints a status line, "v" prints the version / chip line. The web demo (docs/demo/) sends "T" when it connects.
+// "s" prints a status line, "v" prints the version / chip line, "L" toggles the LED blink.
+//
+// On the W boards the LED sits on the wireless chip, and every LED write is SPI traffic that the
+// piezo inputs can pick up as a click (the LED then blinks again: a self-sustaining loop). So the
+// LED blink is OFF by default on W boards; send "L" to turn it on if your wiring is quiet enough. The web demo (docs/demo/) sends "T" when it connects.
 
 #include <Arduino.h>
 #include "pico/time.h"
@@ -30,10 +34,16 @@ static ks::Detector det0(0), det1(1);
 static uint32_t n_ch_[2] = {0, 0};               // samples processed per channel
 static uint32_t t0_us_ = 0;
 static bool print_thuds_ = false;
+#if defined(PICO_CYW43_SUPPORTED)
+#pragma message "kachi-sense: W board, LED blink off by default"
+static bool led_blink_ = false;                 // W boards: LED writes make noise
+#else
+static bool led_blink_ = true;
+#endif
 static uint32_t led_off_ms_ = 0;
 static uint32_t clicks_[2] = {0, 0};
 
-#define KS_VERSION "0.1.1"
+#define KS_VERSION "0.1.2"
 #if defined(PICO_RP2350)
 #define KS_CHIP "RP2350"
 #else
@@ -64,7 +74,7 @@ static void emit(const ks::Event& e) {
   const uint32_t t_us = t0_us_ + (uint32_t)(e.start_n * (1e6f / ks::FS));
   Serial.printf("{\"ch\":%u,\"t_us\":%lu,\"kind\":\"%s\",\"dur_ms\":%.1f,\"peak\":%.1f,\"energy\":%.1f,\"ratio\":%.2f}\n",
                 e.ch, (unsigned long)t_us, click ? "click" : "thud", e.dur_ms, e.peak, e.energy, e.ratio());
-  if (click && e.ch == 1) { digitalWrite(LED_BUILTIN, HIGH); led_off_ms_ = millis() + 80; }
+  if (click && e.ch == 1 && led_blink_) { digitalWrite(LED_BUILTIN, HIGH); led_off_ms_ = millis() + 80; }
 }
 
 void setup() {
@@ -99,10 +109,13 @@ void loop() {
     if (c == 'T') print_thuds_ = true;
     if (c == 'Q') print_thuds_ = false;
     if (c == 'v') print_version();
+    if (c == 'L') { led_blink_ = !led_blink_; if (!led_blink_) { digitalWrite(LED_BUILTIN, LOW); led_off_ms_ = 0; } }
     if (c == 's') {
-      Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu thuds=%s\n",
+      Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu thuds=%s led=%s"
+                    " dc=%.0f/%.0f floor=%.1f/%.1f\n",
                     (unsigned long)n_ch_[0], (unsigned long)n_ch_[1], (unsigned long)overruns_,
-                    (unsigned long)clicks_[0], (unsigned long)clicks_[1], print_thuds_ ? "on" : "off");
+                    (unsigned long)clicks_[0], (unsigned long)clicks_[1], print_thuds_ ? "on" : "off",
+                    led_blink_ ? "on" : "off", det0.dc(), det1.dc(), det0.noise_floor(), det1.noise_floor());
     }
   }
 }
