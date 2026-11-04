@@ -1,5 +1,7 @@
 # kachi-sense　豆が落ちた「カチッ」で成否を判定するセンサー
 
+[![CI](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml/badge.svg)](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml)
+
 ロボットハンドで豆を1粒ずつ皿から皿へ移すとき、**移せたかどうかを音で自動判定**するための小さなセンサーと解析ソフトです。皿の裏に圧電素子を貼り、豆が着地したときの高い「カチッ」という音を拾います。
 
 判定結果は、遠隔操作や学習のログと時刻で突き合わせて、試行ごとに `success / dropped / double / miss` のラベルを自動で付けます。人が録画を見返して手でラベルを付ける作業をなくし、ハンドの学習データを速く・正確に貯めるのが目的です。
@@ -64,6 +66,8 @@
 ### 1. ファームウェアを書き込む
 
 Arduino IDE に [Arduino-Pico](https://github.com/earlephilhower/arduino-pico) を入れ、`firmware/kachi_sense_pico/` を開いて Raspberry Pi Pico に書き込みます。シリアルモニタ（115200 bps）に、豆を検出するたび 1 行の JSON が出ます。`t` で衝突（thud）の表示を切り替え、`s` で状態を表示します。
+
+Arduino IDE を使わずに書き込むこともできます。GitHub Actions が push のたびにファームウェアをビルドしているので、[Actions](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml) の最新の実行から `kachi_sense_pico-uf2` をダウンロードします（GitHub へのログインが必要です）。Pico の BOOTSEL ボタンを押しながら USB につなぎ、出てきたドライブ `RPI-RP2` に `.uf2` をコピーすれば書き込み完了です。
 
 ### 2. PC で記録する
 

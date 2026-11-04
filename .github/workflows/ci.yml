@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python:
+    name: pytest (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install "numpy>=1.24" "pyserial>=3.5" "pytest>=7"
+      # g++ is preinstalled on ubuntu-latest, so the C++/Python parity test runs here too.
+      - name: Run tests
+        run: pytest -v -rs
+
+  firmware:
+    name: Build firmware (Raspberry Pi Pico)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Arduino data
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15
+          key: arduino-pico-${{ runner.os }}-v1
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install Arduino-Pico core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          arduino-cli core update-index
+          arduino-cli core install rp2040:rp2040
+      - name: Compile
+        run: |
+          arduino-cli compile \
+            --fqbn rp2040:rp2040:rpipico \
+            --warnings all \
+            --output-dir build \
+            firmware/kachi_sense_pico
+          ls -l build
+      - name: Upload UF2
+        uses: actions/upload-artifact@v4
+        with:
+          name: kachi_sense_pico-uf2
+          path: build/*.uf2
+          if-no-files-found: error
