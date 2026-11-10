@@ -100,6 +100,9 @@ class Detector {
     return false;
   }
 
+  float noise_floor() const { return floor_; }  // envelope floor, ADC counts
+  float dc() const { return dc_; }              // input DC level, ADC counts (VMID ~ 2048)
+
  private:
   uint8_t ch_;
   float b0_, b1_, b2_, a1_, a2_, lp_a_, dc_a_, rel_, floor_a_;
