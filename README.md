@@ -51,15 +51,18 @@
 
 ## ハードウェア
 
-- Raspberry Pi Pico（RP2040）
+- Raspberry Pi Pico 2 W（Pico / Pico W / Pico 2 でも同じ配線で動く）
 - 圧電サウンダー 7BB-27-4L0 × 2：取り出す皿（ch 0）と置く皿（ch 1）の裏に貼る
+- オペアンプ MCP6002 × 1：圧電素子の信号を 11 倍に増幅（2 回路入りで 2 チャンネル分）
 - 抵抗・コンデンサ・ショットキーダイオード少々
 
-![回路図](docs/schematic.svg)
+![回路図 v2（増幅あり）](docs/schematic_amp.svg)
 
-部品はすべて秋月電子通商で揃います。販売コード付きの部品表は [docs/bom.md](docs/bom.md)、配線は [docs/wiring.md](docs/wiring.md) にあります。Pico を含めて約 1,600 円です。
+部品はすべて秋月電子通商で揃います。販売コード付きの部品表は [docs/bom.md](docs/bom.md)、配線は [docs/wiring.md](docs/wiring.md) にあります。部品代は Pico 本体を除いて約 1,000 円です。
 
-各チャンネル 20 kHz でサンプリングし、Pico の上で検出まで済ませます。PC には検出したイベントだけを USB シリアルで送ります。置く皿で豆を検出すると、Pico の LED が光ります。
+増幅なしの最初の回路（v1）は [docs/schematic.png](docs/schematic.png) にあります。皿への貼り方がよく、信号が十分大きければ v1 でも動きます。
+
+各チャンネル 20 kHz でサンプリングし、Pico の上で検出まで済ませます。PC には検出したイベントだけを USB シリアルで送ります。置く皿で豆を検出すると、Pico の LED が光ります（Pico W / Pico 2 W では初期状態でオフ。`L` で切り替え）。
 
 ## 使い方
 
