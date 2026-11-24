@@ -47,7 +47,7 @@ static uint32_t bounces_[2] = {0, 0};
 // Bounces (the same bean landing again 70-430 ms later, quieter) are told apart from new beans
 // by the decaying peak-hold mask in detector.h (ks::BounceMask).
 
-#define KS_VERSION "0.2.0"
+#define KS_VERSION "0.2.1"
 #if defined(PICO_RP2350)
 #define KS_CHIP "RP2350"
 #else
@@ -55,7 +55,7 @@ static uint32_t bounces_[2] = {0, 0};
 #endif
 
 static void print_version() {
-  Serial.printf("# kachi-sense %s on %s, %lu MHz, 2 ch x %d Hz\n", KS_VERSION, KS_CHIP,
+  Serial.printf("# kachi-sense %s on %s, %lu MHz, 2 ch x %d Hz\r\n", KS_VERSION, KS_CHIP,
                 (unsigned long)(rp2040.f_cpu() / 1000000), (int)ks::FS);
 }
 
@@ -78,7 +78,7 @@ static void emit(const ks::Event& e) {
   if (click) clicks_[e.ch]++;
   if (bounce) bounces_[e.ch]++;
   if (!click && !bounce && !print_thuds_) return;
-  Serial.printf("{\"ch\":%u,\"t_us\":%lu,\"kind\":\"%s\",\"dur_ms\":%.1f,\"peak\":%.1f,\"energy\":%.1f,\"ratio\":%.2f,\"clipped\":%s}\n",
+  Serial.printf("{\"ch\":%u,\"t_us\":%lu,\"kind\":\"%s\",\"dur_ms\":%.1f,\"peak\":%.1f,\"energy\":%.1f,\"ratio\":%.2f,\"clipped\":%s}\r\n",
                 e.ch, (unsigned long)t_us, e.kind(), e.dur_ms, e.peak, e.energy, e.ratio(),
                 e.clipped ? "true" : "false");
   if (click && e.ch == 1 && led_blink_) { digitalWrite(LED_BUILTIN, HIGH); led_off_ms_ = millis() + 80; }
@@ -119,7 +119,7 @@ void loop() {
     if (c == 'L') { led_blink_ = !led_blink_; if (!led_blink_) { digitalWrite(LED_BUILTIN, LOW); led_off_ms_ = 0; } }
     if (c == 's') {
       Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu bounces=%lu/%lu thuds=%s led=%s"
-                    " dc=%.0f/%.0f floor=%.1f/%.1f\n",
+                    " dc=%.0f/%.0f floor=%.1f/%.1f\r\n",
                     (unsigned long)n_ch_[0], (unsigned long)n_ch_[1], (unsigned long)overruns_,
                     (unsigned long)clicks_[0], (unsigned long)clicks_[1], (unsigned long)bounces_[0],
                     (unsigned long)bounces_[1], print_thuds_ ? "on" : "off",
