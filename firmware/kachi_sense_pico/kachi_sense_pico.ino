@@ -6,6 +6,7 @@
 //   GP27 / A1 = ch 1 = target plate (beans should land here)
 // Each channel is sampled at 20 kHz (the timer runs at 40 kHz and alternates).
 // Detected events go out over USB serial as one JSON object per line:
+//   kind is "click" (a new bean), "bounce" (the same bean bouncing, see BOUNCE_MS) or "thud".
 //   {"ch":1,"t_us":1234567,"kind":"click","dur_ms":13.1,"peak":212.0,"energy":15320.5,"ratio":8.4}
 // The on-board LED (LED_BUILTIN) blinks on every click on the target plate. On the W boards the
 // LED hangs off the wireless chip; the core routes LED_BUILTIN there for us.
@@ -42,8 +43,15 @@ static bool led_blink_ = true;
 #endif
 static uint32_t led_off_ms_ = 0;
 static uint32_t clicks_[2] = {0, 0};
+static uint32_t bounces_[2] = {0, 0};
+// A bean bounces 2-5 times after landing (measured: 70-180 ms apart, smaller each time).
+// A click that starts within BOUNCE_MS of the previous click/bounce on the same plate is
+// reported as "bounce" and not counted as a new bean. Sliding window: each bounce extends it.
+static constexpr uint32_t BOUNCE_MS = 250;
+static uint32_t last_click_us_[2] = {0, 0};
+static bool have_click_[2] = {false, false};
 
-#define KS_VERSION "0.1.2"
+#define KS_VERSION "0.1.3"
 #if defined(PICO_RP2350)
 #define KS_CHIP "RP2350"
 #else
@@ -68,12 +76,20 @@ static bool on_tick(repeating_timer_t*) {
 }
 
 static void emit(const ks::Event& e) {
-  const bool click = e.is_click();
-  if (click) clicks_[e.ch]++;
-  if (!click && !print_thuds_) return;
   const uint32_t t_us = t0_us_ + (uint32_t)(e.start_n * (1e6f / ks::FS));
+  bool click = e.is_click();
+  bool bounce = false;
+  if (click) {
+    if (have_click_[e.ch] && t_us - last_click_us_[e.ch] < BOUNCE_MS * 1000u) { bounce = true; click = false; }
+    last_click_us_[e.ch] = t_us;
+    have_click_[e.ch] = true;
+  }
+  if (click) clicks_[e.ch]++;
+  if (bounce) bounces_[e.ch]++;
+  if (!click && !bounce && !print_thuds_) return;
   Serial.printf("{\"ch\":%u,\"t_us\":%lu,\"kind\":\"%s\",\"dur_ms\":%.1f,\"peak\":%.1f,\"energy\":%.1f,\"ratio\":%.2f}\n",
-                e.ch, (unsigned long)t_us, click ? "click" : "thud", e.dur_ms, e.peak, e.energy, e.ratio());
+                e.ch, (unsigned long)t_us, click ? "click" : (bounce ? "bounce" : "thud"),
+                e.dur_ms, e.peak, e.energy, e.ratio());
   if (click && e.ch == 1 && led_blink_) { digitalWrite(LED_BUILTIN, HIGH); led_off_ms_ = millis() + 80; }
 }
 
@@ -111,10 +127,11 @@ void loop() {
     if (c == 'v') print_version();
     if (c == 'L') { led_blink_ = !led_blink_; if (!led_blink_) { digitalWrite(LED_BUILTIN, LOW); led_off_ms_ = 0; } }
     if (c == 's') {
-      Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu thuds=%s led=%s"
+      Serial.printf("# samples ch0=%lu ch1=%lu overruns=%lu clicks src=%lu tgt=%lu bounces=%lu/%lu thuds=%s led=%s"
                     " dc=%.0f/%.0f floor=%.1f/%.1f\n",
                     (unsigned long)n_ch_[0], (unsigned long)n_ch_[1], (unsigned long)overruns_,
-                    (unsigned long)clicks_[0], (unsigned long)clicks_[1], print_thuds_ ? "on" : "off",
+                    (unsigned long)clicks_[0], (unsigned long)clicks_[1], (unsigned long)bounces_[0],
+                    (unsigned long)bounces_[1], print_thuds_ ? "on" : "off",
                     led_blink_ ? "on" : "off", det0.dc(), det1.dc(), det0.noise_floor(), det1.noise_floor());
     }
   }
