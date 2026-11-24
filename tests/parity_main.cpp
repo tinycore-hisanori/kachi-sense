@@ -7,6 +7,6 @@ int main() {
   unsigned ch; float v; ks::Event e;
   while (std::scanf("%u %f", &ch, &v) == 2)
     if (d[ch].push(v, &e))
-      std::printf("%u %lu %s %.3f\n", e.ch, (unsigned long)e.start_n, e.is_click() ? "click" : "thud", e.peak);
+      std::printf("%u %lu %s %.3f\n", e.ch, (unsigned long)e.start_n, e.kind(), e.peak);
   return 0;
 }

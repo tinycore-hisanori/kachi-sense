@@ -11,7 +11,7 @@ A trial window comes from the teleoperation / policy log: when the hand was
 told to move one bean. Rule for one trial:
   success  - exactly one click on the target plate inside the window
   dropped  - a click on the source plate after the grasp time (the bean fell back)
-  double   - two or more target clicks (two beans moved, or a bounce we could not merge)
+  double   - two or more target clicks (two beans moved; bounces are already reported as "bounce")
   miss     - no target click at all
 """
 

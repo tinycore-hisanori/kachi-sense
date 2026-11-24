@@ -1,0 +1,27 @@
+{
+  "note": "Real events from the v2 board (MCP6002 x11, Pico 2 W), 2026-11-24. Only the click-like events (ratio >= 2) are listed. truth: what actually happened, from the bench notes. 'small' = isolated ~80-count event with no bean dropped (cause unknown, kept as click for now).",
+  "sessions": [
+    {
+      "name": "5 cm drops, 5 beans per plate",
+      "events": [
+        [1, 274.900687, 2114.3, "click"], [1, 277.204015, 2828.1, "click"], [1, 277.385135, 609.3, "bounce"],
+        [1, 279.023279, 1339.8, "click"], [1, 279.185615, 668.6, "bounce"], [1, 279.293135, 606.9, "bounce"],
+        [1, 279.363919, 250.2, "bounce"], [1, 282.896559, 2700.2, "click"], [1, 283.022575, 1445.0, "bounce"],
+        [1, 283.158831, 550.5, "bounce"], [1, 283.228367, 163.7, "bounce"], [1, 283.299119, 228.4, "bounce"],
+        [0, 290.157583, 675.5, "click"], [0, 292.159887, 1207.9, "click"], [0, 295.991375, 1409.4, "click"],
+        [1, 298.409775, 79.3, "click"]
+      ]
+    },
+    {
+      "name": "1-2 cm drops, 5 beans per plate",
+      "events": [
+        [1, 142.766556, 80.0, "click"], [1, 162.125308, 2301.8, "click"], [1, 162.250460, 397.4, "bounce"],
+        [1, 162.344652, 729.1, "bounce"], [1, 162.419964, 162.2, "bounce"], [1, 164.394108, 318.9, "click"],
+        [1, 164.485564, 128.7, "bounce"], [1, 165.963660, 1271.4, "click"], [1, 166.337500, 177.6, "bounce"],
+        [1, 166.390412, 380.8, "bounce"], [1, 169.288652, 1770.3, "click"], [1, 169.445100, 585.2, "bounce"],
+        [1, 172.465356, 494.9, "click"], [1, 172.536908, 245.6, "bounce"], [0, 176.520556, 2629.4, "click"],
+        [0, 178.990860, 1497.0, "click"], [0, 179.095308, 418.9, "bounce"], [0, 181.191004, 1952.9, "click"]
+      ]
+    }
+  ]
+}

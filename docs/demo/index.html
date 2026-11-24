@@ -171,6 +171,7 @@ function onEvent(ev) {
   let label, color;
   if (ev.kind === "click" && ev.ch === 1) { state.ok++; label = "成功"; color = "var(--bean)"; flash(1, "カチッ！ 成功", "hit"); bump("tOk"); }
   else if (ev.kind === "click") { state.drop++; label = "落下"; color = "var(--drop)"; flash(0, "カチッ… 落下", "hit"); bump("tDrop"); }
+  else if (ev.kind === "bounce") { label = "跳ね返り"; color = "var(--muted)"; }   // same bean bouncing: log only, not counted
   else { state.thud++; label = "衝突"; color = "var(--thud)"; flash(ev.ch, "コツン（無視）", "knock"); bump("tThud"); }
   state.rows.push({ t_s: ((tus - (state.t0 ?? tus)) / 1e6).toFixed(4), ...ev });
   const log = $("log");
@@ -180,7 +181,7 @@ function onEvent(ev) {
   const t = document.createElement("span"); t.className = "t"; t.textContent = fmtT(tus);
   const b = document.createElement("b"); b.textContent = `${label} ch${ev.ch}`;
   const m = document.createElement("span"); m.className = "m";
-  m.textContent = `peak ${Math.round(ev.peak ?? 0)}  比 ${(ev.ratio ?? 0).toFixed(1)}`;
+  m.textContent = `peak ${Math.round(ev.peak ?? 0)}  比 ${(ev.ratio ?? 0).toFixed(1)}${ev.clipped ? "  飽和" : ""}`;
   li.append(t, b, m);
   log.prepend(li);
   while (log.children.length > 200) log.lastElementChild.remove();
@@ -253,7 +254,8 @@ function demoStep() {
   const r = Math.random();
   const t_us = Math.round(performance.now() * 1000);
   let ev;
-  if (r < 0.55) ev = { ch: 1, kind: "click", peak: 80 + Math.random() * 300, ratio: 4 + Math.random() * 8 };
+  if (r < 0.12) ev = { ch: 1, kind: "bounce", peak: 30 + Math.random() * 80, ratio: 3 + Math.random() * 4 };
+  else if (r < 0.55) ev = { ch: 1, kind: "click", peak: 80 + Math.random() * 300, ratio: 4 + Math.random() * 8 };
   else if (r < 0.70) ev = { ch: 0, kind: "click", peak: 60 + Math.random() * 200, ratio: 4 + Math.random() * 6 };
   else ev = { ch: Math.random() < 0.7 ? 0 : 1, kind: "thud", peak: 20 + Math.random() * 40, ratio: 0.2 + Math.random() };
   onEvent({ ...ev, t_us, dur_ms: 10 + Math.random() * 8 });
@@ -276,7 +278,7 @@ $("reset").onclick = () => {
 
 $("save").onclick = () => {
   if (!state.rows.length) return;
-  const cols = ["t_s", "ch", "kind", "dur_ms", "peak", "energy", "ratio", "t_us"];
+  const cols = ["t_s", "ch", "kind", "dur_ms", "peak", "energy", "ratio", "clipped", "t_us"];
   const csv = [cols.join(",")].concat(state.rows.map(r => cols.map(c => r[c] ?? "").join(","))).join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));

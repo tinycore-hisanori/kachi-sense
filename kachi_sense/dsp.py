@@ -16,6 +16,17 @@ Signal chain per channel:
   An event is a "click" (a bean landing) when its high-band peak is at least
   CLICK_RATIO times its low-band peak; otherwise it is a "thud" (a finger or
   the hand knocking the plate), which has its energy down low.
+
+Bounce mask (a decaying peak-hold on accepted clicks):
+  A bean bounces a few times after landing, 70-430 ms apart, each bounce at
+  0.14-0.54 of the landing peak (measured on the v2 x11 board). After a click
+  with peak P at time t0, a later click-like event at time t only counts as a
+  new bean when its peak exceeds MASK_K * P * exp(-(t - t0) / MASK_TAU_S);
+  otherwise it is a "bounce". Bounces do not move the mask.
+
+Clipping: an event is marked clipped when the raw ADC touched CLIP_LO / CLIP_HI
+  (the op-amp hit a rail). Logged only for now; the ratio of a clipped event
+  reads low because the flattened tops add low-band energy.
 """
 
 from __future__ import annotations
@@ -37,6 +48,10 @@ MAX_MS = 60.0
 REFRACTORY_MS = 40.0
 CLICK_RATIO = 2.0    # measured on synthetic data: clicks >= 3.5, thuds <= 1.3
 WARMUP_MS = 50.0
+MASK_K = 0.7         # a new bean must beat 0.7 x the last landing peak ...
+MASK_TAU_S = 1.0     # ... decaying with this time constant
+CLIP_LO = 8.0        # raw ADC counts treated as the op-amp rails
+CLIP_HI = 4087.0
 
 
 @dataclass
@@ -47,19 +62,50 @@ class Event:
     peak: float         # peak of the high band, ADC counts
     energy: float       # sum of squares of the high band over the event
     lf_peak: float      # peak of the low band over the event
+    bounce: bool = False   # click-like, but under the bounce mask of the last click
+    clipped: bool = False  # the raw ADC hit a rail during the event
 
     @property
     def ratio(self) -> float:
         return self.peak / (self.lf_peak + 1.0)
 
     @property
+    def is_click_like(self) -> bool:
+        return self.ratio >= CLICK_RATIO
+
+    @property
     def kind(self) -> str:
-        return "click" if self.ratio >= CLICK_RATIO else "thud"
+        if not self.is_click_like:
+            return "thud"
+        return "bounce" if self.bounce else "click"
 
     def as_dict(self) -> dict:
         return {"ch": self.ch, "t": round(self.t_start, 6), "kind": self.kind,
                 "dur_ms": round(self.dur_ms, 2), "peak": round(self.peak, 1),
-                "energy": round(self.energy, 1), "ratio": round(self.ratio, 2)}
+                "energy": round(self.energy, 1), "ratio": round(self.ratio, 2),
+                "clipped": self.clipped}
+
+
+class BounceMask:
+    """Decaying peak-hold over accepted clicks. Same rule as ks::BounceMask in detector.h."""
+
+    def __init__(self, fs: int = FS, k: float = MASK_K, tau_s: float = MASK_TAU_S) -> None:
+        self.fs, self.k, self.tau_n = fs, k, tau_s * fs
+        self.peak = 0.0
+        self.n = 0
+        self.armed = False
+
+    def level(self, n: int) -> float:
+        if not self.armed:
+            return 0.0
+        return self.k * self.peak * math.exp(-(n - self.n) / self.tau_n)
+
+    def judge(self, n: int, peak: float) -> bool:
+        """Feed a click-like event starting at sample n. Returns True if it is a bounce."""
+        if peak < self.level(n):
+            return True
+        self.peak, self.n, self.armed = peak, n, True
+        return False
 
 
 class Detector:
@@ -93,6 +139,8 @@ class Detector:
         self.ev_peak = self.ev_energy = self.ev_lf = 0.0
         self.below = 0
         self.quiet_until = 0
+        self.ev_clip = False
+        self.mask = BounceMask(fs)
 
     def push(self, x: float) -> Event | None:
         """Feed one raw ADC sample. Returns an Event when one finishes."""
@@ -122,6 +170,7 @@ class Detector:
                 self.in_event = True
                 self.ev_start, self.below = n, 0
                 self.ev_peak = self.ev_energy = self.ev_lf = 0.0
+                self.ev_clip = False
             else:
                 self.floor += (self.env - self.floor) * self.floor_a
                 return None
@@ -129,14 +178,19 @@ class Detector:
         self.ev_peak = max(self.ev_peak, a)
         self.ev_energy += y * y
         self.ev_lf = max(self.ev_lf, abs(self.lp2))
+        if x <= CLIP_LO or x >= CLIP_HI:
+            self.ev_clip = True
         off = max(self.floor * self.k_off, self.min_abs * 0.5)
         self.below = self.below + 1 if self.env < off else 0
         length = n - self.ev_start + 1
         if self.below >= self.hold or length >= self.max_len:
             self.in_event = False
             self.quiet_until = n + self.refr
-            return Event(self.ch, self.ev_start / self.fs, length * 1000.0 / self.fs,
-                         self.ev_peak, self.ev_energy, self.ev_lf)
+            ev = Event(self.ch, self.ev_start / self.fs, length * 1000.0 / self.fs,
+                       self.ev_peak, self.ev_energy, self.ev_lf, clipped=self.ev_clip)
+            if ev.is_click_like:
+                ev.bounce = self.mask.judge(self.ev_start, self.ev_peak)
+            return ev
         return None
 
     def run(self, samples, clicks_only: bool = True) -> list[Event]:
