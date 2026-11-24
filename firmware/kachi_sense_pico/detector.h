@@ -19,13 +19,40 @@ constexpr float MAX_MS = 60.0f;
 constexpr float REFRACTORY_MS = 40.0f;
 constexpr float CLICK_RATIO = 2.0f;
 constexpr float WARMUP_MS = 50.0f;
+constexpr float MASK_K = 0.7f;       // bounce mask: a new bean must beat 0.7 x the last landing peak,
+constexpr float MASK_TAU_S = 1.0f;   // decaying with this time constant (see kachi_sense/dsp.py)
+constexpr float CLIP_LO = 8.0f;      // raw ADC counts treated as the op-amp rails
+constexpr float CLIP_HI = 4087.0f;
 
 struct Event {
   uint8_t ch;
   uint32_t start_n;  // sample index when the event began
   float dur_ms, peak, energy, lf_peak;
+  bool bounce;   // click-like, but under the bounce mask of the last click
+  bool clipped;  // the raw ADC hit a rail during the event
   float ratio() const { return peak / (lf_peak + 1.0f); }
-  bool is_click() const { return ratio() >= CLICK_RATIO; }
+  bool is_click_like() const { return ratio() >= CLICK_RATIO; }
+  bool is_click() const { return is_click_like() && !bounce; }
+  const char* kind() const { return !is_click_like() ? "thud" : (bounce ? "bounce" : "click"); }
+};
+
+// Decaying peak-hold over accepted clicks. Same rule as BounceMask in kachi_sense/dsp.py.
+class BounceMask {
+ public:
+  float level(uint32_t n) const {
+    if (!armed_) return 0.0f;
+    return MASK_K * peak_ * expf(-(float)(n - n_) / (FS * MASK_TAU_S));
+  }
+  // Feed a click-like event starting at sample n. Returns true if it is a bounce.
+  bool judge(uint32_t n, float peak) {
+    if (peak < level(n)) return true;
+    peak_ = peak; n_ = n; armed_ = true;
+    return false;
+  }
+ private:
+  float peak_ = 0.0f;
+  uint32_t n_ = 0;
+  bool armed_ = false;
 };
 
 class Detector {
@@ -74,6 +101,7 @@ class Detector {
         in_event_ = true;
         ev_start_ = n; below_ = 0;
         ev_peak_ = ev_energy_ = ev_lf_ = 0.0f;
+        ev_clip_ = false;
       } else {
         floor_ += (env_ - floor_) * floor_a_;
         return false;
@@ -83,6 +111,7 @@ class Detector {
     ev_peak_ = fmaxf(ev_peak_, a);
     ev_energy_ += y * y;
     ev_lf_ = fmaxf(ev_lf_, fabsf(lp2_));
+    if (x <= CLIP_LO || x >= CLIP_HI) ev_clip_ = true;
     const float off = fmaxf(floor_ * K_OFF, MIN_ABS * 0.5f);
     below_ = env_ < off ? below_ + 1 : 0;
     const uint32_t len = n - ev_start_ + 1;
@@ -95,6 +124,8 @@ class Detector {
       out->peak = ev_peak_;
       out->energy = ev_energy_;
       out->lf_peak = ev_lf_;
+      out->clipped = ev_clip_;
+      out->bounce = out->is_click_like() ? mask_.judge(ev_start_, ev_peak_) : false;
       return true;
     }
     return false;
@@ -111,6 +142,8 @@ class Detector {
   bool primed_ = false, in_event_ = false;
   float dc_ = 0, z1_ = 0, z2_ = 0, lp1_ = 0, lp2_ = 0, env_ = 0, floor_ = 0;
   float ev_peak_ = 0, ev_energy_ = 0, ev_lf_ = 0;
+  bool ev_clip_ = false;
+  BounceMask mask_;
 };
 
 }  // namespace ks
