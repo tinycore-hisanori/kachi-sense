@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml/badge.svg)](https://github.com/tinycore-hisanori/kachi-sense/actions/workflows/ci.yml)
 
+▶ **デモ動画（27秒）**：https://youtu.be/JlNPUe1J674 　左の皿から豆をつまんで右の皿に落とすと、画面に「成功」と出ます。
+
 ロボットハンドで豆を1粒ずつ皿から皿へ移すとき、**移せたかどうかを音で自動判定**するための小さなセンサーと解析ソフトです。皿の裏に圧電素子を貼り、豆が着地したときの高い「カチッ」という音を拾います。
 
 判定結果は、遠隔操作や学習のログと時刻で突き合わせて、試行ごとに `success / dropped / double / miss` のラベルを自動で付けます。人が録画を見返して手でラベルを付ける作業をなくし、ハンドの学習データを速く・正確に貯めるのが目的です。
