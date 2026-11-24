@@ -44,14 +44,14 @@ static bool led_blink_ = true;
 static uint32_t led_off_ms_ = 0;
 static uint32_t clicks_[2] = {0, 0};
 static uint32_t bounces_[2] = {0, 0};
-// A bean bounces 2-5 times after landing (measured: 70-180 ms apart, smaller each time).
+// A bean bounces 2-5 times after landing (measured: 70-180 ms apart, smaller each time; one late bounce came 374 ms after landing).
 // A click that starts within BOUNCE_MS of the previous click/bounce on the same plate is
 // reported as "bounce" and not counted as a new bean. Sliding window: each bounce extends it.
-static constexpr uint32_t BOUNCE_MS = 250;
+static constexpr uint32_t BOUNCE_MS = 500;
 static uint32_t last_click_us_[2] = {0, 0};
 static bool have_click_[2] = {false, false};
 
-#define KS_VERSION "0.1.3"
+#define KS_VERSION "0.1.4"
 #if defined(PICO_RP2350)
 #define KS_CHIP "RP2350"
 #else
