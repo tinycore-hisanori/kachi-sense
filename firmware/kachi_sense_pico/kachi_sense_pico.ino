@@ -19,6 +19,9 @@
 // LED blink is OFF by default on W boards; send "L" to turn it on if your wiring is quiet enough. The web demo (docs/demo/) sends "T" when it connects.
 
 #include <Arduino.h>
+#if defined(ARDUINO_ARCH_MBED) || !defined(ARDUINO_ARCH_RP2040)
+#error "Select a board from 'Raspberry Pi Pico/RP2040/RP2350' (Earle Philhower core), not 'Arduino Mbed OS RP2040 Boards'. / ボードは Earle Philhower 版コア「Raspberry Pi Pico/RP2040/RP2350」の中から選んでください（Arduino Mbed OS RP2040 Boards では動きません）"
+#endif
 #include "pico/time.h"
 #include "hardware/adc.h"
 #include "detector.h"
